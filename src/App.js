@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -10,13 +10,16 @@ function App() {
     const [file, setFile] = useState(null);
     const [copied, setCopied] = useState(false);
 
+    // ✅ Backend URL Environment Variable Se Lo (Better Practice)
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://ai-tool-backend.onrender.com";
+
     const handleGenerate = async () => {
         if (!prompt.trim()) return;
         setLoading(true);
         setResponse("");
-
+        
         try {
-            const res = await fetch("http://localhost:5000/generate", {
+            const res = await fetch(`${BACKEND_URL}/generate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ prompt }),
@@ -25,15 +28,16 @@ function App() {
             const data = await res.json();
             setResponse("");
 
-            // Typing Effect
+            // ✅ Typing Effect Optimization
             let index = 0;
             const interval = setInterval(() => {
                 setResponse((prev) => prev + data.result[index]);
                 index++;
                 if (index >= data.result.length) clearInterval(interval);
-            }, 20);
+            }, 30);
 
             setCopied(false);
+            setPrompt(""); // ✅ Generate Click Hone Par Prompt Clear Karo
         } catch (error) {
             console.error("Error:", error);
             setResponse("❌ Error fetching response. Please try again.");
@@ -70,9 +74,12 @@ function App() {
     };
 
     return (
-        <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"} flex flex-col items-center p-6 transition-all`}>
+        <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"} flex flex-col items-center p-6 transition-all duration-300`}>
             {/* ✅ Dark Mode Toggle Button */}
-            <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 px-4 py-2 bg-gray-800 text-white rounded shadow hover:bg-gray-700">
+            <button 
+                onClick={() => setDarkMode(!darkMode)} 
+                className="absolute top-4 right-4 px-4 py-2 bg-gray-800 text-white rounded shadow hover:bg-gray-700 transition-all"
+            >
                 {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
             </button>
 
@@ -108,7 +115,7 @@ function App() {
                     <>
                         <p className="whitespace-pre-wrap">{response}</p>
                         {/* ✅ Copy Button */}
-                        <button onClick={handleCopy} className="absolute top-2 right-2 bg-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-400">
+                        <button onClick={handleCopy} className="absolute top-2 right-2 bg-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-400 transition-all">
                             {copied ? "✅ Copied!" : "📋 Copy"}
                         </button>
                     </>
